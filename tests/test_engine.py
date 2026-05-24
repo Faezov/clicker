@@ -39,3 +39,11 @@ def test_winter_food_upkeep_is_harsher_than_summer() -> None:
 
     assert winter.state.resources.food < summer.state.resources.food
 
+
+def test_visible_state_explains_rules_and_events() -> None:
+    engine = GameEngine(GameEngine.start_new_game(seed=2))
+    visible = engine.get_visible_state()
+
+    assert any("upkeep" in rule for rule in visible["season_rules"])
+    assert visible["event_chances"]
+    assert "Expedition score" in visible["expedition_summary"]

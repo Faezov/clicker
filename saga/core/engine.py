@@ -5,8 +5,8 @@ from typing import Any
 
 from saga.content.endings import ENDING_TEXT
 from saga.core import balance
-from saga.core.actions import Action, apply_action, available_actions
-from saga.core.events import apply_random_event
+from saga.core.actions import Action, apply_action, available_actions, expedition_score_preview
+from saga.core.events import apply_random_event, event_chances_for_season
 from saga.core.rng import DeterministicRng
 from saga.core.seasons import SEASONAL_EFFECTS, describe_turn
 from saga.core.state import GameState
@@ -167,6 +167,9 @@ class GameEngine:
         self.state.log(self.state.current_story)
 
     def get_visible_state(self) -> dict[str, Any]:
+        effects = SEASONAL_EFFECTS[self.state.season]
+        food_needed = int(round(self.state.resources.population * effects.upkeep_food_per_person))
+        expedition_score = expedition_score_preview(self.state)
         return {
             "title": "Saga Settlement: The First Winter",
             "turn": self.state.turn_label,
@@ -175,6 +178,20 @@ class GameEngine:
             "story": self.state.current_story,
             "log": list(self.state.village_log[-60:]),
             "actions": self.available_actions(),
+            "season_rules": [
+                f"End of season upkeep will consume about {food_needed} food for {self.state.resources.population} people.",
+                f"Season modifiers: wood x{effects.wood_multiplier:g}, fish/hunt x{effects.food_multiplier:g}, harvest {effects.harvest_amount} food, morale {effects.morale_delta:+d}.",
+                "After upkeep, exactly one random event occurs.",
+                f"If food <= {balance.WEAKNESS_FOOD_THRESHOLD}, morale <= {balance.WEAKNESS_MORALE_THRESHOLD}, or population <= {balance.WEAKNESS_POPULATION_THRESHOLD}, the weakness chain advances. At {balance.WEAKNESS_EVENT_LIMIT} weakness marks, the village collapses.",
+                f"Low morale below {balance.LOW_MORALE_THRESHOLD} cuts production to {int(balance.LOW_MORALE_PRODUCTION_MULTIPLIER * 100)}%.",
+            ],
+            "event_chances": event_chances_for_season(self.state.season),
+            "expedition_summary": (
+                f"Expedition score now {expedition_score:.1f}. In Year 3, roll 0-6 and beat target "
+                f"{balance.EXPEDITION_BASE_TARGET}. Score = warriors*{balance.EXPEDITION_WARRIOR_SCORE:g} "
+                f"+ morale*{balance.EXPEDITION_MORALE_SCORE:g} + fame*{balance.EXPEDITION_FAME_SCORE:g} "
+                f"+ discovery*{balance.EXPEDITION_DISCOVERY_SCORE:g}."
+            ),
             "can_end_turn": self.can_end_turn(),
             "game_over": self.state.game_over,
             "victory": self.state.victory,

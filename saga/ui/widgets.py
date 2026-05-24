@@ -62,12 +62,26 @@ class StoryPanel(Gtk.Box):
         self.story_label.set_xalign(0)
         self.story_label.set_wrap(True)
         self.story_label.set_vexpand(True)
+        self.rules_label = Gtk.Label()
+        self.rules_label.set_xalign(0)
+        self.rules_label.set_wrap(True)
+        self.rules_label.add_css_class("dim-label")
         self.append(self.turn_label)
         self.append(self.story_label)
+        self.append(self.rules_label)
 
-    def update(self, turn: str, actions_remaining: int, story: str) -> None:
+    def update(
+        self,
+        turn: str,
+        actions_remaining: int,
+        story: str,
+        season_rules: list[str],
+        expedition_summary: str,
+    ) -> None:
         self.turn_label.set_label(f"{turn} | Actions remaining: {actions_remaining}")
         self.story_label.set_label(story)
+        rules_text = "\n".join([*season_rules, expedition_summary])
+        self.rules_label.set_label(rules_text)
 
 
 class ActionsPanel(Gtk.Box):
@@ -88,9 +102,9 @@ class ActionsPanel(Gtk.Box):
         self.buttons.clear()
 
         for action in actions:
-            label = action.name
+            label = f"{action.name}\n{action.effect_summary}"
             if not action.available and action.unavailable_reason:
-                label = f"{action.name} - {action.unavailable_reason}"
+                label = f"{action.name} - {action.unavailable_reason}\n{action.effect_summary}"
             button = Gtk.Button(label=label)
             button.set_sensitive(action.available)
             button.set_tooltip_text(action.description)
@@ -135,9 +149,30 @@ class LogPanel(Gtk.Box):
             self.list_box.append(label)
 
 
+class EventPanel(Gtk.Box):
+    def __init__(self) -> None:
+        super().__init__(orientation=Gtk.Orientation.VERTICAL, spacing=8)
+        heading = Gtk.Label(label="Random Events")
+        heading.set_xalign(0)
+        heading.add_css_class("heading")
+        self.append(heading)
+
+        self.event_label = Gtk.Label()
+        self.event_label.set_xalign(0)
+        self.event_label.set_wrap(True)
+        self.event_label.add_css_class("dim-label")
+        self.append(self.event_label)
+
+    def update(self, event_chances: list[dict[str, str]]) -> None:
+        lines = [
+            f"{event['name']}: {event['chance']} - {event['effect']}"
+            for event in event_chances
+        ]
+        self.event_label.set_label("\n".join(lines))
+
+
 def iter_children(widget: Gtk.Widget):
     child = widget.get_first_child()
     while child is not None:
         yield child
         child = child.get_next_sibling()
-

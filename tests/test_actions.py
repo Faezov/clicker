@@ -18,6 +18,16 @@ def test_gather_wood_changes_resources_and_action_count() -> None:
     assert engine.state.actions_taken_this_turn == 1
 
 
+def test_actions_include_effect_summaries() -> None:
+    engine = GameEngine(GameEngine.start_new_game(seed=1))
+
+    gather = action_by_id(engine, "gather_wood")
+    expedition = action_by_id(engine, "launch_expedition")
+
+    assert "+10 wood" in gather.effect_summary
+    assert "score" in expedition.effect_summary
+
+
 def test_unavailable_actions_are_blocked() -> None:
     engine = GameEngine(GameEngine.start_new_game(seed=1))
 
@@ -48,4 +58,3 @@ def test_low_morale_reduces_production() -> None:
     low.apply_action("fish_hunt")
 
     assert low.state.resources.food < normal.state.resources.food
-

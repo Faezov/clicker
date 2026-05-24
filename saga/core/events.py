@@ -12,6 +12,7 @@ from saga.core.state import GameState
 class Event:
     id: str
     text: str
+    effect_summary: str
     weight: float
     apply: Callable[[GameState], None]
 
@@ -56,23 +57,43 @@ def _quiet_season(state: GameState) -> None:
 
 
 EVENTS = (
-    Event("good_omen", EVENT_TEXT["good_omen"], 1.0, _good_omen),
-    Event("merchant_arrival", EVENT_TEXT["merchant_arrival"], 1.0, _merchant_arrival),
-    Event("storm_damage", EVENT_TEXT["storm_damage"], 1.2, _storm_damage),
-    Event("sickness", EVENT_TEXT["sickness"], 1.0, _sickness),
-    Event("wolf_attack", EVENT_TEXT["wolf_attack"], 0.8, _wolf_attack),
-    Event("bitter_feud", EVENT_TEXT["bitter_feud"], 0.9, _bitter_feud),
-    Event("quiet_season", EVENT_TEXT["quiet_season"], 2.8, _quiet_season),
+    Event("good_omen", EVENT_TEXT["good_omen"], "+4 morale, +1 fame.", 1.0, _good_omen),
+    Event("merchant_arrival", EVENT_TEXT["merchant_arrival"], "+2 iron, +1 silver.", 1.0, _merchant_arrival),
+    Event("storm_damage", EVENT_TEXT["storm_damage"], "-8 wood before huts, -2 morale. Each hut reduces wood loss by 2, minimum loss 3.", 1.2, _storm_damage),
+    Event("sickness", EVENT_TEXT["sickness"], "-4 morale. If no huts exist, also -1 population.", 1.0, _sickness),
+    Event("wolf_attack", EVENT_TEXT["wolf_attack"], "If no warriors: -1 population, -3 morale. With warriors: -1 morale, +1 fame.", 0.8, _wolf_attack),
+    Event("bitter_feud", EVENT_TEXT["bitter_feud"], "-6 morale.", 0.9, _bitter_feud),
+    Event("quiet_season", EVENT_TEXT["quiet_season"], "+1 morale.", 2.8, _quiet_season),
 )
 
 
-def select_random_event(state: GameState, rng: DeterministicRng) -> Event:
+def event_weights_for_season(season: str) -> list[float]:
     weights = [event.weight for event in EVENTS]
-    if state.season == "Winter":
+    if season == "Winter":
         weights = [
             weight * 1.35 if event.id in {"storm_damage", "sickness"} else weight
             for event, weight in zip(EVENTS, weights)
         ]
+    return weights
+
+
+def event_chances_for_season(season: str) -> list[dict[str, str]]:
+    weights = event_weights_for_season(season)
+    total = sum(weights)
+    chances: list[dict[str, str]] = []
+    for event, weight in zip(EVENTS, weights):
+        chances.append(
+            {
+                "name": event.id.replace("_", " ").title(),
+                "chance": f"{(weight / total) * 100:.0f}%",
+                "effect": event.effect_summary,
+            }
+        )
+    return chances
+
+
+def select_random_event(state: GameState, rng: DeterministicRng) -> Event:
+    weights = event_weights_for_season(state.season)
     index = rng.choice_index(weights)
     return EVENTS[index]
 
@@ -84,4 +105,3 @@ def apply_random_event(state: GameState, rng: DeterministicRng) -> Event:
     state.current_story = event.text
     state.log(f"{state.turn_label}: {event.text}")
     return event
-

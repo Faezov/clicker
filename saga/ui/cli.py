@@ -23,11 +23,21 @@ def print_state(engine: GameEngine) -> None:
     print()
     print(visible["story"])
     print()
+    print("Season rules:")
+    for rule in visible["season_rules"]:
+        print(f" - {rule}")
+    print(f" - {visible['expedition_summary']}")
+    print()
+    print("Random event this season:")
+    for event in visible["event_chances"]:
+        print(f" - {event['name']}: {event['chance']} chance. {event['effect']}")
+    print()
     print("Actions:")
     for index, action in enumerate(visible["actions"], start=1):
         suffix = "" if action.available else f" [locked: {action.unavailable_reason}]"
         print(f"{index}. {action.name}{suffix}")
         print(f"   {action.description}")
+        print(f"   Effect: {action.effect_summary}")
     print("e. End Turn   s. Save   l. Load   n. New Game   q. Quit")
 
 

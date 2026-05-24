@@ -14,6 +14,7 @@ class Action:
     id: str
     name: str
     description: str
+    effect_summary: str
     unavailable_reason: str | None = None
 
     @property
@@ -113,6 +114,81 @@ def _reason_for(state: GameState, action_id: str) -> str | None:
     return None
 
 
+def action_effect_summary(state: GameState, action_id: str) -> str:
+    effects = SEASONAL_EFFECTS[state.season]
+    if action_id == "gather_wood":
+        gained = _production_amount(state, 10, effects.wood_multiplier)
+        return f"+{gained} wood, -2 morale. Tools improve this; low morale and many warriors reduce it."
+    if action_id == "fish_hunt":
+        gained = _production_amount(state, 9, effects.food_multiplier)
+        return f"+{gained} food this season. Spring/summer are best; winter is poor."
+    if action_id == "harvest_crops":
+        if state.season == "Winter":
+            return "Unavailable in winter. Summer gives 14 food; autumn gives 12; spring gives 4."
+        return f"+{effects.harvest_amount} food. Strong in summer/autumn, weak in spring."
+    if action_id == "build_huts":
+        storm_loss = max(3, 8 - state.huts * 2)
+        next_storm_loss = max(3, 8 - (state.huts + 1) * 2)
+        return (
+            f"Costs {balance.HUT_WOOD_COST} wood, +4 morale. "
+            f"Storm wood loss falls from {storm_loss} to {next_storm_loss}; huts also protect against sickness."
+        )
+    if action_id == "forge_tools":
+        next_tools = min(balance.TOOLS_MAX, state.tools + balance.TOOLS_GAIN)
+        bonus = int(next_tools * balance.TOOL_PRODUCTION_BONUS * 100)
+        return (
+            f"Costs {balance.TOOLS_WOOD_COST} wood and {balance.TOOLS_IRON_COST} iron. "
+            f"Raises tools to {next_tools}/{balance.TOOLS_MAX}, about +{bonus}% gathering output."
+        )
+    if action_id == "train_warriors":
+        return (
+            f"Costs {balance.TRAIN_WARRIOR_FOOD_COST} food and {balance.TRAIN_WARRIOR_IRON_COST} iron. "
+            "+1 warrior, +1 morale. More than 2 warriors slightly reduce production."
+        )
+    if action_id == "hold_feast":
+        return (
+            f"Costs {balance.FEAST_FOOD_COST} food and {balance.FEAST_SILVER_COST} silver. "
+            f"+{balance.FEAST_MORALE_GAIN} morale, +{balance.FEAST_FAME_GAIN} fame."
+        )
+    if action_id == "trade_locally":
+        return (
+            f"Costs {balance.TRADE_FOOD_COST} food and {balance.TRADE_WOOD_COST} wood. "
+            f"+{balance.TRADE_SILVER_GAIN} silver, +{balance.TRADE_IRON_GAIN} iron. No random risk."
+        )
+    if action_id == "scout_coast":
+        return (
+            f"Costs {balance.SCOUT_FOOD_COST} food. "
+            f"+{balance.SCOUT_DISCOVERY_GAIN} discovery, +1 fame. Discovery improves expedition odds."
+        )
+    if action_id == "build_shipyard":
+        return (
+            f"Costs {balance.SHIPYARD_WOOD_COST} wood and {balance.SHIPYARD_IRON_COST} iron. "
+            "Unlocks longship construction, +2 fame."
+        )
+    if action_id == "build_longship":
+        return (
+            f"Costs {balance.LONGSHIP_WOOD_COST} wood, {balance.LONGSHIP_IRON_COST} iron, "
+            f"and {balance.LONGSHIP_SILVER_COST} silver. +1 ship, +3 fame."
+        )
+    if action_id == "launch_expedition":
+        score = expedition_score_preview(state)
+        return (
+            f"Costs {balance.EXPEDITION_FOOD_COST} food. Needs 1 ship and 3 warriors. "
+            f"Year 3 victory check: score {score:.1f} + random 0-6 vs target {balance.EXPEDITION_BASE_TARGET}."
+        )
+    return ""
+
+
+def expedition_score_preview(state: GameState) -> float:
+    resources = state.resources
+    return (
+        resources.warriors * balance.EXPEDITION_WARRIOR_SCORE
+        + resources.morale * balance.EXPEDITION_MORALE_SCORE
+        + resources.fame * balance.EXPEDITION_FAME_SCORE
+        + resources.discovery * balance.EXPEDITION_DISCOVERY_SCORE
+    )
+
+
 ACTION_IDS = (
     "gather_wood",
     "fish_hunt",
@@ -138,6 +214,7 @@ def available_actions(state: GameState) -> list[Action]:
                 id=action_id,
                 name=text["name"],
                 description=text["description"],
+                effect_summary=action_effect_summary(state, action_id),
                 unavailable_reason=_reason_for(state, action_id),
             )
         )
@@ -270,4 +347,3 @@ def apply_action(state: GameState, action_id: str) -> tuple[bool, str]:
     state.current_story = message
     state.log(f"{state.turn_label}: {message}")
     return True, message
-

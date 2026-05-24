@@ -12,7 +12,7 @@ from gi.repository import Adw, Gio, Gtk
 
 from saga.core.engine import GameEngine
 from saga.core.save import load_game, save_game
-from saga.ui.widgets import ActionsPanel, LogPanel, ResourcePanel, StoryPanel
+from saga.ui.widgets import ActionsPanel, EventPanel, LogPanel, ResourcePanel, StoryPanel
 
 
 APP_ID = "io.github.sagasettlement.FirstWinter"
@@ -29,6 +29,7 @@ class SagaWindow(Adw.ApplicationWindow):
         self.resource_panel = ResourcePanel()
         self.story_panel = StoryPanel()
         self.actions_panel = ActionsPanel(self.on_action)
+        self.event_panel = EventPanel()
         self.log_panel = LogPanel()
         self.end_turn_button = Gtk.Button(label="End Turn")
         self.end_turn_button.connect("clicked", lambda _button: self.end_turn())
@@ -63,6 +64,7 @@ class SagaWindow(Adw.ApplicationWindow):
         left = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=16)
         left.set_size_request(240, -1)
         left.append(self.resource_panel)
+        left.append(self.event_panel)
 
         center = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=16)
         center.set_hexpand(True)
@@ -124,8 +126,11 @@ class SagaWindow(Adw.ApplicationWindow):
             visible["turn"],
             visible["actions_remaining"],
             visible["story"],
+            visible["season_rules"],
+            visible["expedition_summary"],
         )
         self.actions_panel.update(visible["actions"])
+        self.event_panel.update(visible["event_chances"])
         self.log_panel.update(visible["log"])
         self.end_turn_button.set_sensitive(visible["can_end_turn"])
 

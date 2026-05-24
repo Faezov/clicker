@@ -45,6 +45,8 @@ python3 -m pytest
 
 - 3 years, 4 seasons per year, 12 total turns
 - up to 2 actions per season
+- action buttons show exact current effects and lock reasons
+- the UI/CLI show seasonal upkeep, random event chances, and event consequences before the turn ends
 - deterministic random events using a stored seed and roll count
 - JSON save/load
 - CLI and GTK interfaces over the same core engine
