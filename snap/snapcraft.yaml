@@ -1,0 +1,16 @@
+name: saga-settlement-first-winter
+title: Saga Settlement: The First Winter
+version: "0.1.0"
+summary: Text-first Viking village survival game
+description: |
+  Lead a shoreline Viking settlement through three years of seasonal
+  choices, scarce resources, random events, and a final coastal expedition.
+
+base: core24
+grade: devel
+confinement: strict
+
+apps:
+  saga-settlement-first-winter:
+    command: bin/saga-settlement-first-winter
+    extensions: [gnome]

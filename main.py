@@ -1,8 +1,7 @@
 from __future__ import annotations
 
-from ui.app import main
+from saga.main import main
 
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
