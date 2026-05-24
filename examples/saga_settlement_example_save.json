@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "resources": {
+    "wood": 42.0,
+    "food": 31.0,
+    "iron": 8.0,
+    "silver": 15.0,
+    "fame": 6.0,
+    "discovery": 0.0,
+    "population": 3,
+    "population_cap": 7
+  },
+  "buildings": {
+    "hut": 1,
+    "fishing_pier": 1,
+    "lumber_camp": 1,
+    "forge": 0,
+    "longhouse": 0,
+    "shipyard": 0
+  },
+  "last_saved_at": "2026-05-24T12:00:00+00:00",
+  "event_log": [
+    "A small settlement wakes beside the cold shore.",
+    "Hut raised against wind and salt.",
+    "Traders speak of richer waters beyond the fjord."
+  ],
+  "saga_entries": 0,
+  "prestige_points": 0
+}
